@@ -1,0 +1,132 @@
+clear; clc;
+close all;
+
+rng(101)
+
+% TODO(pjatau)
+% remove time extraction from files '../../V06'
+
+% figure options
+fig_dir = './';
+
+% Initialize GF event
+event_id = 'real_case'; %'sim_exp_len' 'sim_const_len' 'real_case'
+nf_pred_dir = './nf_preds';
+v06_dir = '../../V06';
+case_name = 'KABX20210707_00'; %'KABX20210708_23'; %'KABX20210707_00'; %'KABX20210708_00';
+data_path = fullfile(nf_pred_dir, case_name); %'./nf_preds/KABX20210708_00';
+v06_path = fullfile(v06_dir, case_name);
+
+intialize_gf_event
+
+%% Tracking points
+% needs history, timestamps, evalbox as inputs
+exp_del_t = max(ts(2:end) - ts(1:end-1));
+
+% exp_gf_speed = 20; % mph
+exp_gf_speed = 25;
+
+% Hwang thesis: GF propagation speed is 5-20 mps (18-72 kmph)
+% TITAN (1993): max storm speed is 100 kmph
+
+max_age = 1.05* exp_del_t; % 1*1; 2;
+% max_dist = 1.05* exp_gf_speed * exp_del_t; %2.1;
+% min_dist = 0.95* 18
+max_del_dirn = pi/16; %pi/4;
+
+% max_age = 1*1; 2;
+% max_dist = 2.1;
+% max_del_dirn = pi/4; %pi/16; %pi/16; %pi/4;
+
+enable_multiple_subtracks = false; %false;
+
+rad2deg(max_del_dirn)
+
+% forecasts
+anchor_t_index = 12;
+
+points_struct = struct('pos', [], 'displ',[], 'dirn', NaN, 'del_t', NaN, ...
+    'depth', 0, 'id','', 'prev', NaN, 'update_time', NaN, 'del_dirn', NaN);
+
+track_history = {};
+
+indexed_points = cell(1, length(det_history{1}));
+for i = 1:length(det_history{1})
+    point = points_struct;
+    point.pos = det_history{1}(:,i);
+    point.update_time = ts(1);
+    indexed_points{i} = point;
+end
+track_history{1} = indexed_points;
+
+% tracking
+if enable_multiple_subtracks
+    [track_history] = one_to_many_point_correspondence(ts, det_history, track_history, max_age, max_dist, max_del_dirn, points_struct);
+else
+    [track_history] = one_to_one_point_correspondence(ts, det_history, track_history, max_age, max_del_dirn, points_struct, exp_gf_speed);
+end
+
+% forecasting
+% fig_dir = './forecast_results';
+
+% [forecast_history, gt_future, ts_future] = forecast(ts, anchor_t_index, track_history, gt_history, points_struct);
+
+% figure
+
+% % combined
+% fig = figure;
+% set(fig,'Position',[100 100 500 480]);
+% for i = 1:length(ts)
+%     curr_loc = det_history{i};
+%     if isempty(curr_loc)
+%         continue
+%     end
+%     scatter(curr_loc(1,:), curr_loc(2,:), 'filled','MarkerFaceAlpha',(ts(i)+1)/(max(ts)+1)); hold on;
+% end
+% axis(fig_axis);
+% hold off;
+% grid on;
+% set(gca,'TickDir','out','box','on','TickLength' , [.01 .01], 'LineWidth' , 2);
+
+% % individual
+% fig_dir_pos = fullfile(fig_dir,'pos');
+% if ~isfolder(fig_dir_pos)
+%     mkdir(fig_dir_pos);
+% end
+% 
+% for i = 1:length(ts)
+%     fig = figure;
+%     set(fig,'Position',[100 100 500 480]);
+%     curr_loc = det_history{i};
+%     gt_region = gt_history{i};
+%     if isempty(curr_loc)
+%         scatter([], [], 80, 'filled','MarkerFaceAlpha',0.3);
+%     else
+%     scatter(curr_loc(1,:), curr_loc(2,:), 80, 'filled','MarkerFaceAlpha',0.8);
+%     end
+%     hold on;
+% 
+%     axis(fig_axis);
+%     if ~isempty(gt_region)
+%         contour(xi2,yi2,gt_region,'y-','linewidth',1); hold on;
+%     end
+%     hold off;
+%     grid on;
+%     set(gca,'TickDir','out','box','on','TickLength'  , [.01 .01], 'LineWidth' , 2);
+%     outfile_pos = fullfile(fig_dir_pos, ['position_' sprintf('%03d', i) '.png']);
+%     print(outfile_pos, '-dpng');
+% end
+% 
+% close all
+
+% plot tracks
+title_suffix = sprintf("max. angle deviation: %4.1f degrees.", rad2deg(max_del_dirn));
+
+fig_dir_tracks = fullfile(fig_dir,'tracks');
+plot_tracks(track_history, gt_history, xi2, yi2, ts, 0, fig_axis, true, true, fig_dir_tracks,'tracks',title_suffix);
+
+% plot forecast
+% fig_dir_tracks = fullfile(fig_dir,'forecast_results');
+% plot_tracks(forecast_history, gt_future, xi2, yi2, ts_future, 0, fig_axis, false, true, fig_dir_tracks,'hit-miss',title_suffix);
+
+close all;
