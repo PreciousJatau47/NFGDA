@@ -19,7 +19,7 @@ NF02_calc_5by5_SD
 NF04_calc_DeltaZ
 NF05_calc_BETA_LINEFEATURE
 NF06_calc_6variables_preprocessing
-NF07_handpick_region
+% NF07_handpick_region
 NF07_obtaining_evaluation_box
 % % % -------------pre-processing
 % % % + obtaining evaluation box
@@ -40,12 +40,12 @@ NF13_making_stats_evaluation
 NF14_making_stats_scores_final
 % % --->NFGDA scores
 
-% % % % % MIGFA
-run ./MIGFA/YS_ams_00_run_all.m;
-% % % % % MIGFA
-NF16_MIGFA_stats_evaluation
-NF17_MIGFA_stats_scores_migfa_final
-% % --->MIGFA scores
+% % % % % % MIGFA
+% run ./MIGFA/YS_ams_00_run_all.m;
+% % % % % % MIGFA
+% NF16_MIGFA_stats_evaluation
+% NF17_MIGFA_stats_scores_migfa_final
+% % % --->MIGFA scores
 
 
 % % % % % % Stats
